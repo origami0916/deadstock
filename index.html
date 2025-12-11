@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STARTLINEデッドストック</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .theme-color {
+            color: #1e3a8a;
+        }
+
+        .bg-theme {
+            background-color: #1e3a8a;
+        }
+
+        .btn-primary {
+            background-color: #1e3a8a;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .step-arrow {
+            position: relative;
+            padding: 10px 20px;
+            background: #ddd;
+            color: #666;
+            margin-right: 25px;
+            clip-path: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%);
+        }
+
+        .step-arrow.active {
+            background: #ff8c75;
+            color: white;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e3a8a;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body id="app">
+
+    <nav class="bg-theme text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-4 cursor-pointer" @click="view = 'home'">
+                <i class="fas fa-prescription-bottle-alt text-2xl"></i>
+                <span class="text-xl font-bold">STARTLINEデッドストック</span>
+            </div>
+
+            <div class="flex items-center space-x-6" v-if="user">
+                <div class="text-sm">
+                    <i class="fas fa-user-circle mr-1"></i> {{ profile?.shop_name || 'ゲスト' }}様
+                    <span v-if="profile?.is_admin" class="bg-red-500 text-xs px-1 rounded ml-1">管理者</span>
+                </div>
+                <button v-if="profile?.is_admin" @click="view = 'admin'"
+                    class="bg-red-600 hover:bg-red-700 text-xs px-2 py-1 rounded">
+                    <i class="fas fa-cog"></i> マスタ管理
+                </button>
+                <button @click="signOut" class="text-sm underline">ログアウト</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 min-h-screen">
+
+        <div v-if="view === 'login'" class="max-w-md mx-auto bg-white p-8 rounded shadow">
+            <h2 class="text-2xl font-bold mb-6 text-center theme-color">ログイン</h2>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">メールアドレス</label>
+                <input v-model="authForm.email" type="email"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">パスワード</label>
+                <input v-model="authForm.password" type="password"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700">
+            </div>
+            <button @click="signIn" class="btn-primary font-bold py-2 px-4 rounded w-full mb-2">ログイン</button>
+            <div class="text-center"><button @click="signUp" class="text-sm text-blue-800 underline">新規登録</button></div>
+        </div>
+
+        <div v-else-if="view === 'admin'" class="max-w-2xl mx-auto bg-white p-8 rounded shadow">
+            <h2 class="text-xl font-bold mb-4 border-b pb-2"><i class="fas fa-database"></i> 医薬品マスタ管理</h2>
+            <p class="text-sm text-gray-600 mb-4">
+                CSVファイル（薬価基準収載医薬品コード）をアップロードして、マスタデータを更新します。<br>
+                <span class="text-red-500 font-bold">注意: 既存のマスタデータは全て削除され、上書きされます。</span>
+            </p>
+
+            <div class="border-2 border-dashed border-gray-300 p-8 rounded text-center bg-gray-50">
+                <input type="file" ref="csvFile" accept=".csv"
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-800 hover:file:bg-blue-100" />
+                <div v-if="isUploading" class="mt-4 flex flex-col items-center">
+                    <div class="loader mb-2"></div>
+                    <span class="text-blue-800 font-bold">データ更新中... そのままお待ちください</span>
+                    <span class="text-xs text-gray-500">{{ uploadProgress }}</span>
+                </div>
+                <button v-else @click="uploadMasterCSV"
+                    class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded shadow">
+                    <i class="fas fa-upload mr-2"></i> マスタを上書き更新
+                </button>
+            </div>
+        </div>
+
+        <div v-else-if="view === 'home'">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded border-t-4 border-blue-800 shadow p-4">
+                    <h3 class="font-bold text-lg mb-4 text-gray-700">出品メニュー</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button @click="view = 'listing_search'"
+                            class="border border-blue-800 text-blue-800 py-4 rounded hover:bg-blue-50 flex flex-col items-center">
+                            <i class="fas fa-upload mb-2 text-xl"></i><span class="font-bold">新しく出品</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <h3 class="text-xl font-bold mb-4 border-l-4 border-blue-800 pl-3">新着の医薬品</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div v-for="item in items" :key="item.id" class="bg-white rounded shadow p-3 cursor-pointer"
+                    @click="selectedItem=item; view='detail'">
+                    <div class="h-24 bg-gray-100 flex items-center justify-center text-gray-300 mb-2">NO PHOTO</div>
+                    <h4 class="text-sm font-bold text-blue-600 truncate">{{ item.drug_name }}</h4>
+                    <p class="text-lg font-bold text-red-600">¥{{ item.price }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div v-else-if="view === 'listing_search'">
+            <div class="bg-white p-8 rounded shadow">
+                <h2 class="text-xl font-bold mb-4 theme-color">医薬品検索</h2>
+                <div class="flex gap-2">
+                    <input v-model="searchQuery" @keyup.enter="searchMaster" type="text"
+                        class="border p-2 w-full rounded" placeholder="医薬品名 または YJコードを入力">
+                    <button @click="searchMaster" class="bg-orange-400 text-white px-4 rounded"><i
+                            class="fas fa-search"></i></button>
+                </div>
+
+                <table v-if="masterResults.length" class="w-full mt-4 text-left text-sm">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-2">名称</th>
+                            <th class="p-2">単位</th>
+                            <th class="p-2">YJコード</th>
+                            <th class="p-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="drug in masterResults" :key="drug.id" class="border-b">
+                            <td class="p-2 font-bold text-blue-600">{{ drug.name }}</td>
+                            <td class="p-2">{{ drug.unit }}</td>
+                            <td class="p-2 text-xs text-gray-500">{{ drug.yj_code }}</td>
+                            <td class="p-2"><button @click="selectDrug(drug)"
+                                    class="bg-blue-800 text-white px-3 py-1 rounded text-xs">選択</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div v-else-if="view === 'listing_form'">
+            <div class="bg-white p-6 rounded shadow max-w-2xl mx-auto">
+                <h2 class="text-xl font-bold mb-4">{{ listingForm.drug_name }}</h2>
+                <div class="space-y-4">
+                    <div><label class="block text-sm font-bold">数量</label><input v-model="listingForm.quantity"
+                            type="number" class="border p-2 w-20"> {{ listingForm.unit }}</div>
+                    <div><label class="block text-sm font-bold">価格</label><input v-model="listingForm.price"
+                            type="number" class="border p-2 w-32"> 円</div>
+                    <div><label class="block text-sm font-bold">使用期限</label><input type="date"
+                            v-model="listingForm.expiry_date" class="border p-2"></div>
+                    <button @click="submitItem"
+                        class="bg-orange-400 text-white font-bold px-8 py-2 rounded w-full">出品する</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createClient } = supabase;
+        // IMPORTANT: Replace these with your actual Supabase URL and Key
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        Vue.createApp({
+            data() {
+                return {
+                    view: 'login',
+                    user: null,
+                    profile: null,
+                    authForm: { email: '', password: '' },
+                    isUploading: false,
+                    uploadProgress: '',
+                    items: [],
+                    searchQuery: '',
+                    masterResults: [],
+                    listingForm: {},
+                    selectedItem: null
+                }
+            },
+            async mounted() {
+                const { data: { session } } = await client.auth.getSession();
+                if (session) {
+                    this.user = session.user;
+                    await this.fetchProfile();
+                    this.view = 'home';
+                    this.fetchItems();
+                }
+            },
+            methods: {
+                async signIn() {
+                    const { error } = await client.auth.signInWithPassword(this.authForm);
+                    if (!error) location.reload(); else alert(error.message);
+                },
+                async signUp() {
+                    const { error } = await client.auth.signUp(this.authForm);
+                    if (!error) alert("確認メールを送信しました"); else alert(error.message);
+                },
+                async signOut() {
+                    await client.auth.signOut();
+                    location.reload();
+                },
+                async fetchProfile() {
+                    const { data } = await client.from('profiles').select('*').eq('id', this.user.id).single();
+                    this.profile = data;
+                },
+                async fetchItems() {
+                    const { data } = await client.from('items').select('*').order('created_at', { ascending: false });
+                    this.items = data || [];
+                },
+
+                // --- CSV Upload Logic ---
+                async uploadMasterCSV() {
+                    const file = this.$refs.csvFile.files[0];
+                    if (!file) return alert("ファイルを選択してください");
+
+                    if (!confirm("既存のマスタデータを全て削除して上書きします。よろしいですか？")) return;
+
+                    this.isUploading = true;
+                    this.uploadProgress = 'ファイル解析中...';
+
+                    Papa.parse(file, {
+                        header: false,
+                        encoding: "UTF-8", // ファイルに合わせて変更 (標準的なy_ALLはShift-JISだが、今回はUTF-8指定)
+                        complete: async (results) => {
+                            const rows = results.data;
+                            const records = rows.map(row => {
+                                // CSV列マッピング: 2:レセプト, 4:名称, 6:カナ, 9:単位, 24:新薬価, 31:YJコード
+                                if (!row[4] || !row[31]) return null;
+                                return {
+                                    receipt_code: row[2],
+                                    name: row[4],
+                                    kana: row[6],
+                                    unit: row[9],
+                                    price: parseFloat(row[24]) || 0,
+                                    yj_code: row[31]
+                                };
+                            }).filter(r => r !== null);
+
+                            this.uploadProgress = `全 ${records.length} 件のデータを登録準備中...`;
+
+                            // 1. 全削除 (Chunkで削除するか、全てのIDを取得して削除)
+                            // Supabaseではtruncateがないため、管理者ポリシーでdelete実行
+                            const { error: delError } = await client.from('drug_master').delete().neq('id', 0);
+                            if (delError) {
+                                alert("削除エラー: " + delError.message);
+                                this.isUploading = false;
+                                return;
+                            }
+
+                            // 2. 一括登録 (1000件ずつ)
+                            const CHUNK_SIZE = 1000;
+                            for (let i = 0; i < records.length; i += CHUNK_SIZE) {
+                                const chunk = records.slice(i, i + CHUNK_SIZE);
+                                await client.from('drug_master').insert(chunk);
+                                this.uploadProgress = `${Math.min(i + CHUNK_SIZE, records.length)} / ${records.length} 件 完了`;
+                            }
+
+                            alert("マスタ更新が完了しました！");
+                            this.isUploading = false;
+                            this.view = 'home';
+                        },
+                        error: (err) => {
+                            alert("CSV解析エラー: " + err.message);
+                            this.isUploading = false;
+                        }
+                    });
+                },
+
+                // --- Listing Logic ---
+                async searchMaster() {
+                    if (!this.searchQuery) return;
+                    const { data } = await client.from('drug_master')
+                        .select('*')
+                        .or(`name.ilike.%${this.searchQuery}%,yj_code.ilike.%${this.searchQuery}%`)
+                        .limit(20);
+                    this.masterResults = data || [];
+                },
+                selectDrug(drug) {
+                    this.listingForm = {
+                        drug_name: drug.name,
+                        unit: drug.unit,
+                        price: drug.price, // 参考価格
+                        quantity: 1
+                    };
+                    this.view = 'listing_form';
+                },
+                async submitItem() {
+                    const { error } = await client.from('items').insert({
+                        seller_id: this.user.id,
+                        ...this.listingForm,
+                        status: 'on_sale'
+                    });
+                    if (!error) { alert("出品完了"); this.view = 'home'; }
+                    else alert(error.message);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>

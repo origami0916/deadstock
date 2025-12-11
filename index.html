@@ -13,17 +13,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
-    <!-- Tailwind Config for Custom Colors -->
+    <!-- Tailwind Config -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        theme: {
-                            DEFAULT: '#1e3a8a', // Deep Blue
-                            light: '#3b82f6',
-                            dark: '#172554',
-                        }
+                        theme: { DEFAULT: '#1e3a8a', light: '#3b82f6', dark: '#172554' }
                     }
                 }
             }
@@ -34,7 +30,6 @@
         body {
             font-family: "Helvetica Neue", Arial, sans-serif;
             background-color: #f8fafc;
-            /* Slate-50 */
         }
 
         .loader {
@@ -43,7 +38,7 @@
             border-radius: 50%;
             width: 30px;
             height: 30px;
-            animation: spin 2s linear infinite;
+            animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
@@ -56,7 +51,6 @@
             }
         }
 
-        /* Transition wrappers */
         .fade-enter-active,
         .fade-leave-active {
             transition: opacity 0.3s ease;
@@ -71,43 +65,41 @@
 
 <body id="app" class="text-slate-800">
 
-    <!-- Navigation -->
+    <!-- ========== Navigation ========== -->
     <nav class="bg-theme text-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <!-- Logo -->
             <div class="flex items-center space-x-3 cursor-pointer hover:opacity-90 transition"
                 @click="navigateTo('home')">
                 <i class="fas fa-prescription-bottle-alt text-2xl"></i>
                 <span class="text-xl font-bold tracking-wide">STARTLINEデッドストック</span>
             </div>
-
-            <!-- User Menu -->
             <div class="flex items-center space-x-4" v-if="user">
-                <div class="hidden md:flex items-center text-sm bg-theme-dark px-3 py-1 rounded-full">
+                <div @click="navigateTo('mypage')"
+                    class="hidden md:flex items-center text-sm bg-theme-dark px-3 py-1 rounded-full cursor-pointer hover:bg-theme-light transition select-none">
                     <i class="fas fa-user-circle mr-2 text-theme-light"></i>
                     <span class="font-semibold">{{ profile?.shop_name || 'ゲスト' }}</span>
                     <span v-if="profile?.is_admin"
                         class="ml-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold">ADMIN</span>
                 </div>
-
                 <div class="flex space-x-2">
                     <button v-if="profile?.is_admin" @click="navigateTo('admin')"
-                        class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded transition shadow-sm">
-                        <i class="fas fa-cog mr-1"></i> 管理
-                    </button>
+                        class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded transition shadow-sm"
+                        title="管理者メニュー"><i class="fas fa-cog"></i></button>
+                    <button @click="navigateTo('mypage')"
+                        class="md:hidden bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded transition"><i
+                            class="fas fa-user"></i></button>
                     <button @click="signOut"
-                        class="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded transition">
-                        ログアウト
-                    </button>
+                        class="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded transition"
+                        title="ログアウト"><i class="fas fa-sign-out-alt"></i></button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
+    <!-- ========== Main Content ========== -->
     <div class="container mx-auto px-4 py-8 min-h-screen max-w-5xl">
 
-        <!-- Login View -->
+        <!-- ========== Login View ========== -->
         <div v-if="view === 'login'" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg mt-10">
             <h2 class="text-2xl font-bold mb-6 text-center text-theme">ログイン</h2>
             <form @submit.prevent="signIn">
@@ -122,18 +114,188 @@
                         class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-theme/50 transition bg-slate-50">
                 </div>
                 <button type="submit"
-                    class="w-full bg-theme hover:bg-theme-dark text-white font-bold py-3 px-4 rounded-lg shadow transition transform active:scale-95">
-                    ログイン
-                </button>
+                    class="w-full bg-theme hover:bg-theme-dark text-white font-bold py-3 px-4 rounded-lg shadow transition transform active:scale-95">ログイン</button>
             </form>
             <div class="mt-4 text-center">
-                <button @click="signUp" class="text-sm text-theme-light hover:underline font-semibold">
-                    アカウントを作成する（新規登録）
-                </button>
+                <button @click="signUp"
+                    class="text-sm text-theme-light hover:underline font-semibold">アカウントを作成する（新規登録）</button>
             </div>
         </div>
 
-        <!-- Admin View -->
+        <!-- ========== My Page View ========== -->
+        <div v-else-if="view === 'mypage'" class="max-w-4xl mx-auto space-y-8">
+            <!-- Profile Section -->
+            <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-theme">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-slate-800"><i
+                            class="fas fa-store-alt mr-2 text-theme"></i>薬局プロフィール設定</h2>
+                    <button @click="updateProfile"
+                        class="bg-theme hover:bg-theme-dark text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition">変更を保存する</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-slate-500 text-xs font-bold uppercase mb-1">薬局名</label>
+                        <input v-model="profile.shop_name" type="text"
+                            class="w-full border p-2 rounded focus:ring-2 focus:ring-theme/50 bg-slate-50">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 text-xs font-bold uppercase mb-1">メールアドレス <span
+                                class="text-xs font-normal">(変更不可)</span></label>
+                        <input :value="user?.email" type="text" disabled
+                            class="w-full border p-2 rounded bg-slate-100 text-slate-500 cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 text-xs font-bold uppercase mb-1">住所</label>
+                        <input v-model="profile.address" type="text"
+                            class="w-full border p-2 rounded focus:ring-2 focus:ring-theme/50 bg-slate-50"
+                            placeholder="〒000-0000 東京都...">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 text-xs font-bold uppercase mb-1">薬局開設許可証</label>
+                        <div v-if="profile?.license_image_url" class="mb-2">
+                            <a :href="profile.license_image_url" target="_blank" class="text-theme text-sm underline"><i
+                                    class="fas fa-check-circle text-green-500"></i> アップロード済み (確認する)</a>
+                        </div>
+                        <input type="file" @change="uploadLicense" accept="image/*"
+                            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-theme hover:file:bg-blue-100">
+                        <p class="text-[10px] text-slate-400 mt-1">※出品機能を利用するにはアップロードが必要です</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Items Section -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center">
+                    <i class="fas fa-boxes mr-2 text-theme"></i>出品した医薬品
+                    <span class="ml-3 bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">{{ myItems.length
+                        }}件</span>
+                </h2>
+                <div v-if="myItems.length === 0" class="text-center py-8 text-slate-400 bg-slate-50 rounded-lg">
+                    出品中のアイテムはありません</div>
+                <div v-else class="space-y-3">
+                    <div v-for="item in myItems" :key="item.id"
+                        class="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50 p-4 rounded-lg border border-slate-100 hover:border-blue-200 transition">
+                        <div class="mb-2 md:mb-0">
+                            <div class="font-bold text-theme text-sm">{{ item.drug_name }}</div>
+                            <div class="text-xs text-slate-500 mt-1">
+                                <span class="mr-3"><i class="fas fa-cube mr-1"></i>{{ item.quantity }}{{ item.unit
+                                    }}</span>
+                                <span class="mr-3"><i class="fas fa-yen-sign mr-1"></i>{{ item.price?.toLocaleString()
+                                    }}</span>
+                                <span :class="{'text-red-500': isExpiringSoon(item.expiry_date)}"><i
+                                        class="fas fa-calendar-alt mr-1"></i>期限: {{ item.expiry_date }}</span>
+                            </div>
+                        </div>
+                        <button @click="deleteItem(item.id)"
+                            class="border border-red-200 text-red-500 hover:bg-red-50 px-3 py-1.5 rounded text-xs font-bold transition"><i
+                                class="fas fa-trash-alt mr-1"></i>出品取消</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Orders (Purchase History) -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center">
+                    <i class="fas fa-shopping-bag mr-2 text-orange-500"></i>購入した取引
+                    <span class="ml-3 bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">{{ myPurchases.length
+                        }}件</span>
+                </h2>
+                <div v-if="myPurchases.length === 0" class="text-center py-8 text-slate-400 bg-slate-50 rounded-lg">
+                    購入履歴はありません</div>
+                <div v-else class="space-y-3">
+                    <div v-for="order in myPurchases" :key="order.id" @click="openChat(order)"
+                        class="flex justify-between items-center bg-orange-50 p-4 rounded-lg border border-orange-100 hover:border-orange-300 transition cursor-pointer">
+                        <div>
+                            <div class="font-bold text-slate-700 text-sm">取引 #{{ order.id.substring(0, 8) }}</div>
+                            <div class="text-xs text-slate-500 mt-1">ステータス: <span class="font-bold"
+                                    :class="{'text-green-600': order.status === 'completed', 'text-orange-500': order.status !== 'completed'}">{{
+                                    statusLabel(order.status) }}</span></div>
+                        </div>
+                        <i class="fas fa-comments text-orange-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Sales (Sales History) -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center">
+                    <i class="fas fa-coins mr-2 text-green-500"></i>販売した取引
+                    <span class="ml-3 bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full">{{ mySales.length
+                        }}件</span>
+                </h2>
+                <div v-if="mySales.length === 0" class="text-center py-8 text-slate-400 bg-slate-50 rounded-lg">
+                    販売履歴はありません</div>
+                <div v-else class="space-y-3">
+                    <div v-for="order in mySales" :key="order.id" @click="openChat(order)"
+                        class="flex justify-between items-center bg-green-50 p-4 rounded-lg border border-green-100 hover:border-green-300 transition cursor-pointer">
+                        <div>
+                            <div class="font-bold text-slate-700 text-sm">取引 #{{ order.id.substring(0, 8) }}</div>
+                            <div class="text-xs text-slate-500 mt-1">ステータス: <span class="font-bold"
+                                    :class="{'text-green-600': order.status === 'completed', 'text-orange-500': order.status !== 'completed'}">{{
+                                    statusLabel(order.status) }}</span></div>
+                        </div>
+                        <i class="fas fa-comments text-green-400 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== Chat View ========== -->
+        <div v-else-if="view === 'chat' && currentOrder" class="max-w-2xl mx-auto">
+            <button @click="navigateTo('mypage')"
+                class="mb-4 text-slate-500 hover:text-theme flex items-center text-sm"><i
+                    class="fas fa-arrow-left mr-1"></i> マイページに戻る</button>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-theme text-white px-6 py-4 flex justify-between items-center">
+                    <div>
+                        <h2 class="font-bold">取引チャット</h2>
+                        <p class="text-xs text-blue-200">#{{ currentOrder.id.substring(0, 8) }}</p>
+                    </div>
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">{{
+                        statusLabel(currentOrder.status) }}</span>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="h-80 overflow-y-auto p-4 bg-slate-50 space-y-3" ref="chatBox">
+                    <div v-if="chatMessages.length === 0" class="text-center text-slate-400 py-10"><i
+                            class="fas fa-comments text-4xl mb-2"></i>
+                        <p>メッセージはまだありません</p>
+                    </div>
+                    <div v-for="msg in chatMessages" :key="msg.id"
+                        :class="['flex', msg.sender_id === user.id ? 'justify-end' : 'justify-start']">
+                        <div
+                            :class="['max-w-[70%] px-4 py-2 rounded-xl text-sm', msg.sender_id === user.id ? 'bg-theme text-white rounded-br-none' : 'bg-white border border-slate-200 rounded-bl-none']">
+                            <p>{{ msg.message }}</p>
+                            <p class="text-[10px] mt-1"
+                                :class="msg.sender_id === user.id ? 'text-blue-200' : 'text-slate-400'">{{ new
+                                Date(msg.created_at).toLocaleString() }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Input -->
+                <div class="p-4 border-t bg-white flex gap-2">
+                    <input v-model="newMessage" @keyup.enter="sendMessage" type="text" placeholder="メッセージを入力..."
+                        class="flex-1 border p-2 rounded-lg focus:ring-2 focus:ring-theme/50 bg-slate-50">
+                    <button @click="sendMessage"
+                        class="bg-theme hover:bg-theme-dark text-white px-4 py-2 rounded-lg font-bold transition"><i
+                            class="fas fa-paper-plane"></i></button>
+                </div>
+
+                <!-- Status Actions -->
+                <div class="p-4 bg-slate-100 border-t">
+                    <p class="text-xs text-slate-500 mb-2">ステータス変更:</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button @click="updateOrderStatus('shipped')" v-if="currentOrder.seller_id === user.id"
+                            class="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-full">発送完了</button>
+                        <button @click="updateOrderStatus('completed')" v-if="currentOrder.buyer_id === user.id"
+                            class="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-full">受取完了</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== Admin View ========== -->
         <div v-else-if="view === 'admin'" class="bg-white p-8 rounded-xl shadow-md border-t-4 border-red-500">
             <div class="flex justify-between items-center mb-6 border-b pb-4">
                 <div class="flex items-center gap-3">
@@ -146,96 +308,77 @@
                 <button @click="navigateTo('home')" class="text-slate-400 hover:text-slate-600"><i
                         class="fas fa-times"></i></button>
             </div>
-
             <div class="bg-slate-50 border border-slate-200 rounded-lg p-6">
                 <h3 class="font-bold text-slate-700 mb-2">CSV一括更新</h3>
                 <p class="text-sm text-slate-600 mb-6 leading-relaxed">
                     「薬価基準収載医薬品コード」形式のCSVファイルをアップロードしてください。<br>
-                    <span class="text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded inline-block mt-1">
-                        <i class="fas fa-exclamation-triangle"></i> 警告: 実行すると既存のマスタデータは全て削除・上書きされます。
-                    </span>
+                    <span class="text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded inline-block mt-1"><i
+                            class="fas fa-exclamation-triangle"></i> 警告: 既存のマスタデータは全て削除・上書きされます。</span>
                 </p>
-
                 <div class="border-2 border-dashed border-slate-300 p-10 rounded-xl text-center hover:bg-white transition cursor-pointer relative"
                     :class="{'bg-blue-50 border-theme': isDragOver}" @dragover.prevent="isDragOver = true"
                     @dragleave.prevent="isDragOver = false" @drop.prevent="handleDrop">
-
                     <input type="file" ref="csvFile" accept=".csv" class="hidden" @change="uploadMasterCSV">
-
                     <div v-if="isUploading" class="flex flex-col items-center justify-center py-4">
                         <div class="loader mb-4"></div>
                         <p class="text-theme font-bold text-lg animate-pulse">データ更新中...</p>
                         <p class="text-sm text-slate-500 mt-2">{{ uploadProgress }}</p>
                     </div>
-
                     <div v-else @click="$refs.csvFile.click()">
                         <i class="fas fa-cloud-upload-alt text-4xl text-slate-300 mb-3"></i>
                         <p class="font-bold text-slate-600">ファイルを選択 または ドラッグ＆ドロップ</p>
                         <p class="text-xs text-slate-400 mt-1">.csv file (Shift-JIS or UTF-8)</p>
                         <button
-                            class="mt-4 bg-theme text-white px-6 py-2 rounded-full text-sm font-bold shadow hover:bg-theme-dark transition">
-                            アップロード実行
-                        </button>
+                            class="mt-4 bg-theme text-white px-6 py-2 rounded-full text-sm font-bold shadow hover:bg-theme-dark transition">アップロード実行</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Home View -->
+        <!-- ========== Home View ========== -->
         <div v-else-if="view === 'home'" class="space-y-8">
-            <!-- Hero / Action Section -->
             <div
                 class="bg-gradient-to-r from-theme to-theme-dark rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 opacity-10 transform translate-x-10 -translate-y-10">
-                    <i class="fas fa-pills text-9xl"></i>
-                </div>
+                <div class="absolute top-0 right-0 opacity-10 transform translate-x-10 -translate-y-10"><i
+                        class="fas fa-pills text-9xl"></i></div>
                 <div class="relative z-10">
                     <h2 class="text-2xl font-bold mb-2">不要な在庫を、必要な誰かへ。</h2>
                     <p class="text-blue-200 mb-6 text-sm">デッドストック医薬品の有効活用プラットフォーム</p>
                     <button @click="navigateTo('listing_search')"
-                        class="bg-white text-theme font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-100 transition transform hover:-translate-y-1 flex items-center">
-                        <i class="fas fa-plus-circle mr-2"></i> 出品する
-                    </button>
+                        class="bg-white text-theme font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-100 transition transform hover:-translate-y-1 flex items-center"><i
+                            class="fas fa-plus-circle mr-2"></i> 出品する</button>
                 </div>
             </div>
-
-            <!-- New Items Section -->
             <div>
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-slate-700 flex items-center border-l-4 border-theme pl-3">
-                        新着の医薬品
+                    <h3 class="text-lg font-bold text-slate-700 flex items-center border-l-4 border-theme pl-3">新着の医薬品
                     </h3>
                     <button @click="fetchItems" class="text-slate-400 hover:text-theme transition"><i
                             class="fas fa-sync-alt"></i></button>
                 </div>
-
-                <div v-if="items.length === 0" class="text-center py-12 bg-slate-50 rounded-lg text-slate-400">
-                    <i class="fas fa-inbox text-4xl mb-3"></i>
+                <div v-if="items.length === 0" class="text-center py-12 bg-slate-50 rounded-lg text-slate-400"><i
+                        class="fas fa-inbox text-4xl mb-3"></i>
                     <p>現在出品されている医薬品はありません</p>
                 </div>
-
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                     <article v-for="item in items" :key="item.id"
                         class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition cursor-pointer group"
                         @click="selectedItem=item; navigateTo('detail')">
-                        <div class="h-32 bg-slate-100 flex items-center justify-center text-slate-300 relative">
-                            <i class="fas fa-image text-3xl"></i>
+                        <div class="h-32 bg-slate-100 flex items-center justify-center text-slate-300 relative"><i
+                                class="fas fa-image text-3xl"></i>
                             <div
                                 class="absolute top-2 right-2 bg-theme text-white text-xs font-bold px-2 py-1 rounded shadow">
-                                ¥{{ item.price.toLocaleString() }}
-                            </div>
+                                ¥{{ item.price?.toLocaleString() }}</div>
                         </div>
                         <div class="p-4">
                             <h4
                                 class="font-bold text-theme text-sm line-clamp-2 mb-2 group-hover:text-theme-light transition h-10">
-                                {{ item.drug_name }}
-                            </h4>
+                                {{ item.drug_name }}</h4>
                             <div class="flex justify-between items-end text-xs text-slate-500">
                                 <span><i class="fas fa-box bg-slate-100 p-1 rounded mr-1"></i> {{ item.quantity }}{{
                                     item.unit }}</span>
-                                <span :class="{'text-red-500': isExpiringSoon(item.expiry_date)}">
-                                    期限: {{ item.expiry_date }}
-                                </span>
+                                <span :class="{'text-red-500': isExpiringSoon(item.expiry_date)}">期限: {{
+                                    item.expiry_date }}</span>
                             </div>
                         </div>
                     </article>
@@ -243,26 +386,21 @@
             </div>
         </div>
 
-        <!-- Listing Search View -->
+        <!-- ========== Listing Search View ========== -->
         <div v-else-if="view === 'listing_search'" class="max-w-2xl mx-auto">
-            <button @click="navigateTo('home')" class="mb-4 text-slate-500 hover:text-theme flex items-center text-sm">
-                <i class="fas fa-arrow-left mr-1"></i> 戻る
-            </button>
-
+            <button @click="navigateTo('home')"
+                class="mb-4 text-slate-500 hover:text-theme flex items-center text-sm"><i
+                    class="fas fa-arrow-left mr-1"></i> 戻る</button>
             <div class="bg-white p-8 rounded-xl shadow-md border-t-4 border-theme">
                 <h2 class="text-xl font-bold mb-6 text-slate-800 text-center">出品する医薬品を検索</h2>
-
                 <div class="relative mb-6">
                     <i class="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
                     <input v-model="searchQuery" @keyup.enter="searchMaster" type="text"
                         class="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme/50 transition bg-slate-50"
                         placeholder="医薬品名 または YJコードを入力..." autofocus>
                     <button @click="searchMaster"
-                        class="absolute right-2 top-2 bg-theme text-white px-4 py-1.5 rounded-md text-sm font-bold shadow hover:bg-theme-dark transition">
-                        検索
-                    </button>
+                        class="absolute right-2 top-2 bg-theme text-white px-4 py-1.5 rounded-md text-sm font-bold shadow hover:bg-theme-dark transition">検索</button>
                 </div>
-
                 <div v-if="masterResults.length > 0" class="overflow-hidden rounded-lg border border-slate-200">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
@@ -277,95 +415,120 @@
                                     <div class="font-bold text-theme">{{ drug.name }}</div>
                                     <div class="text-xs text-slate-400 font-mono mt-0.5">{{ drug.yj_code }}</div>
                                 </td>
-                                <td class="p-3 text-center">
-                                    <button @click="selectDrug(drug)"
-                                        class="bg-white border border-theme text-theme hover:bg-theme hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition">
-                                        出品
-                                    </button>
+                                <td class="p-3 text-center"><button @click="selectDrug(drug)"
+                                        class="bg-white border border-theme text-theme hover:bg-theme hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition">出品</button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div v-else-if="searchQuery && hasSearched" class="text-center text-slate-400 py-8">
-                    検索結果が見つかりませんでした
+                <div v-else-if="searchQuery && hasSearched" class="text-center text-slate-400 py-8">検索結果が見つかりませんでした
                 </div>
             </div>
         </div>
 
-        <!-- Listing Form View -->
+        <!-- ========== Listing Form View ========== -->
         <div v-else-if="view === 'listing_form'" class="max-w-2xl mx-auto">
             <button @click="navigateTo('listing_search')"
-                class="mb-4 text-slate-500 hover:text-theme flex items-center text-sm">
-                <i class="fas fa-arrow-left mr-1"></i> 戻る
-            </button>
-
+                class="mb-4 text-slate-500 hover:text-theme flex items-center text-sm"><i
+                    class="fas fa-arrow-left mr-1"></i> 戻る</button>
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="bg-slate-50 px-8 py-4 border-b border-slate-100 flex justify-between items-center">
-                    <h2 class="font-bold text-slate-700">出品情報の入力</h2>
-                    <span class="text-xs text-slate-400">Step 2/2</span>
+                    <h2 class="font-bold text-slate-700">出品情報の入力</h2><span class="text-xs text-slate-400">Step
+                        2/2</span>
                 </div>
-
                 <div class="p-8 space-y-6">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">医薬品名</label>
+                    <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">医薬品名</label>
                         <div class="text-xl font-bold text-theme">{{ listingForm.drug_name }}</div>
                         <div class="text-sm text-slate-500 mt-1">YJ: {{ listingForm.yj_code }}</div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-2">数量 <span
+                        <div><label class="block text-sm font-bold text-slate-700 mb-2">数量 <span
                                     class="text-red-500">*</span></label>
-                            <div class="flex items-center">
-                                <input v-model="listingForm.quantity" type="number" min="1"
-                                    class="flex-1 border p-2 rounded-l focus:ring-2 focus:ring-theme/50 focus:outline-none bg-slate-50">
-                                <span
+                            <div class="flex items-center"><input v-model="listingForm.quantity" type="number" min="1"
+                                    class="flex-1 border p-2 rounded-l focus:ring-2 focus:ring-theme/50 focus:outline-none bg-slate-50"><span
                                     class="bg-slate-200 text-slate-600 px-3 py-2 rounded-r text-sm font-bold border border-l-0 border-slate-200">{{
-                                    listingForm.unit }}</span>
-                            </div>
+                                    listingForm.unit }}</span></div>
                         </div>
-
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-2">価格 (税込) <span
+                        <div><label class="block text-sm font-bold text-slate-700 mb-2">価格 (税込) <span
                                     class="text-red-500">*</span></label>
-                            <div class="flex items-center">
-                                <span
-                                    class="bg-slate-100 text-slate-500 px-3 py-2 rounded-l border border-r-0 text-sm">¥</span>
-                                <input v-model="listingForm.price" type="number" min="0"
+                            <div class="flex items-center"><span
+                                    class="bg-slate-100 text-slate-500 px-3 py-2 rounded-l border border-r-0 text-sm">¥</span><input
+                                    v-model="listingForm.price" type="number" min="0"
                                     class="flex-1 border p-2 rounded-r focus:ring-2 focus:ring-theme/50 focus:outline-none bg-slate-50 font-bold text-right"
-                                    placeholder="0">
-                            </div>
+                                    placeholder="0"></div>
                             <p class="text-xs text-slate-400 mt-1 text-right">参考薬価: ¥{{ listingForm.reference_price }}
                             </p>
                         </div>
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">使用期限 <span
-                                class="text-red-500">*</span></label>
-                        <input type="date" v-model="listingForm.expiry_date"
+                    <div><label class="block text-sm font-bold text-slate-700 mb-2">使用期限 <span
+                                class="text-red-500">*</span></label><input type="date"
+                            v-model="listingForm.expiry_date"
                             class="w-full border p-2 rounded focus:ring-2 focus:ring-theme/50 focus:outline-none bg-slate-50">
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">状態・コメント</label>
-                        <textarea v-model="listingForm.comment" rows="3"
+                    <div><label class="block text-sm font-bold text-slate-700 mb-2">状態・コメント</label><textarea
+                            v-model="listingForm.comment" rows="3"
                             class="w-full border p-2 rounded focus:ring-2 focus:ring-theme/50 focus:outline-none bg-slate-50"
-                            placeholder="箱の開封状態や特記事項があれば記載してください"></textarea>
-                    </div>
-
+                            placeholder="箱の開封状態や特記事項があれば記載してください"></textarea></div>
                     <button @click="submitItem"
-                        class="w-full bg-theme hover:bg-theme-dark text-white font-bold py-4 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center">
-                        <i class="fas fa-check-circle mr-2"></i> 出品を完了する
-                    </button>
+                        class="w-full bg-theme hover:bg-theme-dark text-white font-bold py-4 rounded-lg shadow-lg transition transform active:scale-95 flex justify-center items-center"><i
+                            class="fas fa-check-circle mr-2"></i> 出品を完了する</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== Detail & Purchase View ========== -->
+        <div v-else-if="view === 'detail' && selectedItem" class="max-w-4xl mx-auto">
+            <button @click="navigateTo('home')"
+                class="mb-4 text-slate-500 hover:text-theme flex items-center text-sm"><i
+                    class="fas fa-arrow-left mr-1"></i> 戻る</button>
+            <div class="bg-white rounded-xl shadow-lg flex flex-col md:flex-row overflow-hidden">
+                <div class="md:w-1/3 bg-slate-100 flex items-center justify-center p-8 min-h-[300px]">
+                    <div class="text-center"><i class="fas fa-image text-6xl text-slate-300 mb-4"></i>
+                        <p class="text-slate-400 text-sm">NO PHOTO</p>
+                    </div>
+                </div>
+                <div class="md:w-2/3 p-8">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-2xl font-bold text-slate-800 leading-tight">{{ selectedItem.drug_name }}</h2>
+                        <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded text-xs">ID: {{
+                            selectedItem.id?.substring(0,8) }}</span>
+                    </div>
+                    <div class="flex items-end mb-6"><span class="text-4xl font-bold text-theme">¥{{
+                            selectedItem.price?.toLocaleString() }}</span><span
+                            class="text-slate-500 ml-2 mb-2 text-sm">(税込)</span></div>
+                    <div
+                        class="grid grid-cols-2 gap-y-4 text-sm text-slate-600 mb-8 border-t border-b border-slate-100 py-4">
+                        <div><span class="font-bold block text-xs text-slate-400 uppercase">数量</span>{{
+                            selectedItem.quantity }}{{ selectedItem.unit }}</div>
+                        <div><span class="font-bold block text-xs text-slate-400 uppercase">使用期限</span><span
+                                :class="{'text-red-500 font-bold': isExpiringSoon(selectedItem.expiry_date)}">{{
+                                selectedItem.expiry_date }}</span></div>
+                        <div><span class="font-bold block text-xs text-slate-400 uppercase">出品日</span>{{ new
+                            Date(selectedItem.created_at).toLocaleDateString() }}</div>
+                        <div class="col-span-2"><span
+                                class="font-bold block text-xs text-slate-400 uppercase">コメント</span>{{
+                            selectedItem.comment || '特になし' }}</div>
+                    </div>
+                    <div v-if="user && user.id === selectedItem.seller_id">
+                        <div class="bg-yellow-50 text-yellow-800 p-4 rounded-lg text-center font-bold mb-4">あなたが出品した商品です
+                        </div>
+                        <button @click="navigateTo('mypage')"
+                            class="w-full border border-slate-300 hover:bg-slate-50 text-slate-600 font-bold py-3 rounded-lg">管理画面へ</button>
+                    </div>
+                    <div v-else>
+                        <button @click="purchaseItem"
+                            class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-full shadow-lg transition transform hover:-translate-y-1 mb-3 flex justify-center items-center text-lg"><i
+                                class="fas fa-shopping-cart mr-2"></i> 購入する</button>
+                        <p class="text-xs text-center text-slate-400">※購入確定後、出品者に通知が送信されます</p>
+                    </div>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- App Logic -->
+    <!-- ========== App Logic ========== -->
     <script>
         const { createClient } = supabase;
         const SUPABASE_URL = 'https://wlfbvihmknmszxxfcikt.supabase.co';
@@ -375,195 +538,241 @@
         Vue.createApp({
             data() {
                 return {
-                    view: 'login', // login, home, admin, listing_search, listing_form, detail
+                    // Core State
+                    view: 'login',
                     user: null,
                     profile: null,
                     authForm: { email: '', password: '' },
+                    // UI State
                     isUploading: false,
                     isDragOver: false,
                     uploadProgress: '',
+                    // Data
                     items: [],
+                    myItems: [],
+                    myPurchases: [],
+                    mySales: [],
                     searchQuery: '',
                     hasSearched: false,
                     masterResults: [],
                     listingForm: {},
                     selectedItem: null,
+                    // Chat
+                    currentOrder: null,
+                    chatMessages: [],
+                    newMessage: '',
                 }
             },
             async mounted() {
-                // Auth State Listener
                 client.auth.onAuthStateChange(async (event, session) => {
                     this.user = session?.user || null;
                     if (this.user) {
                         await this.fetchProfile();
                         if (this.view === 'login') this.view = 'home';
                         this.fetchItems();
+                        this.fetchMyOrders();
                     } else {
                         this.view = 'login';
                     }
                 });
             },
             methods: {
-                // --- Navigation ---
+                // ========== Navigation ==========
                 navigateTo(viewName) {
+                    if (viewName === 'listing_search' && !this.profile?.license_image_url) {
+                        alert("出品機能を利用するには、まずマイページで「薬局開設許可証」の画像をアップロードしてください。");
+                        this.view = 'mypage';
+                        this.fetchMyItems();
+                        return;
+                    }
                     this.view = viewName;
                     window.scrollTo(0, 0);
+                    if (viewName === 'mypage') { this.fetchMyItems(); this.fetchMyOrders(); }
+                },
+                statusLabel(status) {
+                    const map = { 'pending_payment': '支払い待ち', 'shipped': '発送済み', 'completed': '完了' };
+                    return map[status] || status;
                 },
 
-                // --- Auth ---
-                async signIn() {
-                    const { error } = await client.auth.signInWithPassword(this.authForm);
-                    if (error) alert("ログインエラー: " + error.message);
-                },
+                // ========== Auth & User ==========
+                async signIn() { const { error } = await client.auth.signInWithPassword(this.authForm); if (error) alert("ログインエラー: " + error.message); },
                 async signUp() {
-                    if (!this.authForm.email || !this.authForm.password) {
-                        return alert("メールアドレスとパスワードを入力してください");
-                    }
-                    if (this.authForm.password.length < 6) {
-                        return alert("パスワードは6文字以上で設定してください");
-                    }
+                    if (!this.authForm.email || !this.authForm.password) return alert("メールアドレスとパスワードを入力してください");
+                    if (this.authForm.password.length < 6) return alert("パスワードは6文字以上で設定してください");
                     const { error } = await client.auth.signUp(this.authForm);
-                    if (!error) alert("確認メールを送信しました。メールボックスを確認してください。");
-                    else alert("登録エラー: " + error.message);
+                    if (!error) alert("確認メールを送信しました。"); else alert("登録エラー: " + error.message);
                 },
-                async signOut() {
-                    await client.auth.signOut();
-                },
+                async signOut() { await client.auth.signOut(); },
                 async fetchProfile() {
                     if (!this.user) return;
                     const { data } = await client.from('profiles').select('*').eq('id', this.user.id).single();
-                    this.profile = data;
+                    this.profile = data || {};
+                },
+                async updateProfile() {
+                    const { error } = await client.from('profiles').update({ shop_name: this.profile.shop_name, address: this.profile.address }).eq('id', this.user.id);
+                    if (!error) alert("プロフィールを更新しました"); else alert("更新エラー: " + error.message);
+                },
+                async uploadLicense(e) {
+                    const file = e.target.files[0]; if (!file) return;
+                    const fileExt = file.name.split('.').pop();
+                    const filePath = `${this.user.id}_license.${fileExt}`;
+                    this.uploadProgress = 'アップロード中...';
+                    const { error: uploadError } = await client.storage.from('pharmacy_licenses').upload(filePath, file, { upsert: true });
+                    if (uploadError) { alert("アップロード失敗: " + uploadError.message); this.uploadProgress = ''; return; }
+                    const { data: { publicUrl } } = client.storage.from('pharmacy_licenses').getPublicUrl(filePath);
+                    const { error: updateError } = await client.from('profiles').update({ license_image_url: publicUrl }).eq('id', this.user.id);
+                    if (!updateError) { alert("許可証のアップロード完了！"); this.profile.license_image_url = publicUrl; } else { alert("DB更新エラー: " + updateError.message); }
+                    this.uploadProgress = '';
                 },
 
-                // --- Data ---
-                async fetchItems() {
-                    const { data } = await client.from('items').select('*').order('created_at', { ascending: false });
-                    this.items = data || [];
+                // ========== Data Fetching ==========
+                async fetchItems() { const { data } = await client.from('items').select('*').order('created_at', { ascending: false }); this.items = data || []; },
+                async fetchMyItems() { if (!this.user) return; const { data } = await client.from('items').select('*').eq('seller_id', this.user.id).order('created_at', { ascending: false }); this.myItems = data || []; },
+                async fetchMyOrders() {
+                    if (!this.user) return;
+                    const { data: purchases } = await client.from('orders').select('*').eq('buyer_id', this.user.id).order('created_at', { ascending: false });
+                    const { data: sales } = await client.from('orders').select('*').eq('seller_id', this.user.id).order('created_at', { ascending: false });
+                    this.myPurchases = purchases || [];
+                    this.mySales = sales || [];
                 },
-                isExpiringSoon(dateStr) {
-                    if (!dateStr) return false;
-                    const today = new Date();
-                    const expiry = new Date(dateStr);
-                    const months = (expiry - today) / (1000 * 60 * 60 * 24 * 30);
-                    return months < 6;
-                },
+                async deleteItem(itemId) { if (!confirm("本当にこの出品を取り消しますか？")) return; const { error } = await client.from('items').delete().eq('id', itemId); if (!error) { this.fetchMyItems(); this.fetchItems(); } else { alert("削除エラー: " + error.message); } },
 
-                // --- Admin: CSV Upload ---
-                handleDrop(e) {
-                    this.isDragOver = false;
-                    const file = e.dataTransfer.files[0];
-                    if (file && file.name.endsWith('.csv')) {
-                        // Manually set to file input for consistency or handle directly
-                        this.processCSVFile(file);
+                // ========== Purchase (Using Server-Side RPC for Atomicity) ==========
+                async purchaseItem() {
+                    if (!this.selectedItem) return;
+                    if (!confirm(`【確認】\n${this.selectedItem.drug_name}\n¥${this.selectedItem.price.toLocaleString()}\n\nこの商品を購入しますか？`)) return;
+
+                    // Call atomic RPC function instead of separate insert/delete
+                    const { data, error } = await client.rpc('purchase_item', {
+                        p_item_id: this.selectedItem.id,
+                        p_buyer_id: this.user.id
+                    });
+
+                    if (error) {
+                        return alert("注文処理エラー: " + error.message);
+                    }
+
+                    if (data && data.success) {
+                        alert(data.message + "\nマイページの取引一覧から出品者にメッセージを送れます。");
+                        this.view = 'mypage';
+                        this.fetchItems();
+                        this.fetchMyOrders();
                     } else {
-                        alert('CSVファイルをドロップしてください');
+                        alert("エラー: " + (data?.error || '不明なエラー'));
                     }
                 },
-                uploadMasterCSV(e) {
-                    const file = e.target.files[0];
-                    if (file) this.processCSVFile(file);
+
+                // ========== Chat ==========
+                async openChat(order) {
+                    this.currentOrder = order;
+                    this.view = 'chat';
+                    await this.fetchChatMessages();
                 },
+                async fetchChatMessages() {
+                    if (!this.currentOrder) return;
+                    const { data } = await client.from('messages').select('*').eq('order_id', this.currentOrder.id).order('created_at', { ascending: true });
+                    this.chatMessages = data || [];
+                    this.$nextTick(() => { if (this.$refs.chatBox) this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight; });
+                },
+                async sendMessage() {
+                    if (!this.newMessage.trim() || !this.currentOrder) return;
+                    const { error } = await client.from('messages').insert({ order_id: this.currentOrder.id, sender_id: this.user.id, message: this.newMessage });
+                    if (!error) { this.newMessage = ''; this.fetchChatMessages(); } else { alert("送信エラー: " + error.message); }
+                },
+                async updateOrderStatus(newStatus) {
+                    if (!confirm(`ステータスを「${this.statusLabel(newStatus)}」に更新しますか？`)) return;
+                    const { error } = await client.from('orders').update({ status: newStatus }).eq('id', this.currentOrder.id);
+                    if (!error) { this.currentOrder.status = newStatus; alert("ステータスを更新しました"); } else { alert("更新エラー: " + error.message); }
+                },
+
+                // ========== Utilities ==========
+                isExpiringSoon(dateStr) { if (!dateStr) return false; const today = new Date(); const expiry = new Date(dateStr); return (expiry - today) / (1000 * 60 * 60 * 24 * 30) < 6; },
+
+                // ========== Admin: CSV Upload (Using Server-Side RPC for Truncate) ==========
+                handleDrop(e) { this.isDragOver = false; const file = e.dataTransfer.files[0]; if (file?.name.endsWith('.csv')) this.processCSVFile(file); else alert('CSVファイルをドロップしてください'); },
+                uploadMasterCSV(e) { const file = e.target.files[0]; if (file) this.processCSVFile(file); },
                 async processCSVFile(file) {
                     if (!confirm("【警告】既存のマスタデータを全て削除して上書きします。よろしいですか？")) return;
-
                     this.isUploading = true;
                     this.uploadProgress = 'ファイル解析中...';
 
                     Papa.parse(file, {
-                        header: false,
-                        encoding: "UTF-8", // Or Shift-JIS if strictly needed
+                        header: true, // Use header for column mapping (more robust)
+                        encoding: "UTF-8",
                         complete: async (results) => {
-                            const rows = results.data;
-                            // Map generic CSV columns to our schema
-                            // Index 2: Receipt Code, 4: Name, 6: Kana, 9: Unit, 24: Price, 31: YJ Code
-                            const records = rows.map(row => {
-                                if (!row[4] || !row[31]) return null;
+                            // Map by header name if available, fallback to index
+                            const records = results.data.map(row => {
+                                // Try to get by common header names or fall back to index access
+                                const name = row['医薬品名'] || row['品名'] || (Array.isArray(row) ? row[4] : null);
+                                const yjCode = row['ＹＪコード'] || row['YJコード'] || (Array.isArray(row) ? row[31] : null);
+                                if (!name) return null;
                                 return {
-                                    receipt_code: row[2],
-                                    name: row[4],
-                                    kana: row[6],
-                                    unit: row[9],
-                                    price: parseFloat(row[24]) || 0,
-                                    yj_code: row[31]
+                                    receipt_code: row['薬価基準収載医薬品コード'] || row['レセプト電算コード'] || '',
+                                    name: name,
+                                    kana: row['カナ名'] || row['フリガナ'] || '',
+                                    unit: row['規格'] || row['単位'] || '',
+                                    price: parseFloat(row['薬価'] || row['点数'] || 0) || 0,
+                                    yj_code: yjCode || ''
                                 };
-                            }).filter(r => r !== null);
+                            }).filter(r => r !== null && r.name);
 
-                            this.uploadProgress = `データ準備中 (${records.length}件)...`;
-
-                            // 1. Delete All (using RLS policy for admin)
-                            const { error: delError } = await client.from('drug_master').delete().neq('id', 0);
-                            if (delError) {
-                                alert("削除エラー: " + delError.message);
+                            if (records.length === 0) {
+                                alert("有効なレコードが見つかりませんでした。CSVフォーマットを確認してください。");
                                 this.isUploading = false;
                                 return;
                             }
 
-                            // 2. Insert in Batches
-                            const BATCH_SIZE = 1000;
-                            for (let i = 0; i < records.length; i += BATCH_SIZE) {
-                                const batch = records.slice(i, i + BATCH_SIZE);
-                                await client.from('drug_master').insert(batch);
-                                this.uploadProgress = `登録中: ${Math.min(i + BATCH_SIZE, records.length)} / ${records.length} 件完了`;
+                            this.uploadProgress = `データ準備中 (${records.length}件)...`;
+
+                            // Use RPC for secure truncate (validates admin on server)
+                            const { data: truncResult, error: truncError } = await client.rpc('admin_truncate_drug_master');
+                            if (truncError || !truncResult?.success) {
+                                alert("削除エラー: " + (truncResult?.error || truncError?.message));
+                                this.isUploading = false;
+                                return;
                             }
 
-                            alert("マスタ更新完了！");
+                            // Insert in batches
+                            const BATCH_SIZE = 500;
+                            let insertedCount = 0;
+                            for (let i = 0; i < records.length; i += BATCH_SIZE) {
+                                const batch = records.slice(i, i + BATCH_SIZE);
+                                const { error: insertError } = await client.from('drug_master').insert(batch);
+                                if (insertError) {
+                                    alert(`挿入エラー (${i}件目付近): ${insertError.message}`);
+                                    // Continue anyway to insert as much as possible
+                                }
+                                insertedCount = Math.min(i + BATCH_SIZE, records.length);
+                                this.uploadProgress = `登録中: ${insertedCount} / ${records.length} 件`;
+                            }
+
+                            alert(`マスタ更新完了！ ${insertedCount}件を登録しました。`);
                             this.isUploading = false;
                             this.navigateTo('home');
                         },
-                        error: (err) => {
-                            alert("CSV読み込みエラー: " + err.message);
-                            this.isUploading = false;
-                        }
+                        error: (err) => { alert("CSV読み込みエラー: " + err.message); this.isUploading = false; }
                     });
                 },
 
-                // --- Listing Flow ---
+                // ========== Listing Flow ==========
                 async searchMaster() {
                     if (!this.searchQuery) return;
                     this.hasSearched = true;
-                    // Search by name or YJ code
+
+                    // Use textcontains for better performance if FTS is set up, fallback to ilike
+                    // For production: use full-text search with search_vector column
+                    const query = this.searchQuery.trim();
                     const { data } = await client.from('drug_master')
                         .select('*')
-                        .or(`name.ilike.%${this.searchQuery}%,yj_code.ilike.%${this.searchQuery}%`)
+                        .or(`name.ilike.%${query}%,yj_code.ilike.${query}%`) // yj_code uses prefix match (index-friendly)
                         .limit(50);
                     this.masterResults = data || [];
                 },
-                selectDrug(drug) {
-                    this.listingForm = {
-                        drug_name: drug.name,
-                        yj_code: drug.yj_code,
-                        unit: drug.unit,
-                        price: null, // User decides price
-                        reference_price: drug.price,
-                        quantity: 1,
-                        expiry_date: '',
-                        comment: ''
-                    };
-                    this.navigateTo('listing_form');
-                },
+                selectDrug(drug) { this.listingForm = { drug_name: drug.name, yj_code: drug.yj_code, unit: drug.unit, price: null, reference_price: drug.price, quantity: 1, expiry_date: '', comment: '' }; this.navigateTo('listing_form'); },
                 async submitItem() {
-                    if (!this.listingForm.quantity || !this.listingForm.price || !this.listingForm.expiry_date) {
-                        return alert("必須項目を入力してください");
-                    }
-
-                    const { error } = await client.from('items').insert({
-                        seller_id: this.user.id,
-                        drug_name: this.listingForm.drug_name,
-                        unit: this.listingForm.unit,
-                        price: this.listingForm.price,
-                        quantity: this.listingForm.quantity,
-                        expiry_date: this.listingForm.expiry_date,
-                        comment: this.listingForm.comment,
-                        status: 'on_sale'
-                    });
-
-                    if (!error) {
-                        alert("出品が完了しました！");
-                        this.navigateTo('home');
-                        this.fetchItems();
-                    } else {
-                        alert("エラー: " + error.message);
-                    }
+                    if (!this.listingForm.quantity || !this.listingForm.price || !this.listingForm.expiry_date) return alert("必須項目を入力してください");
+                    const { error } = await client.from('items').insert({ seller_id: this.user.id, drug_name: this.listingForm.drug_name, unit: this.listingForm.unit, price: this.listingForm.price, quantity: this.listingForm.quantity, expiry_date: this.listingForm.expiry_date, comment: this.listingForm.comment, status: 'on_sale' });
+                    if (!error) { alert("出品が完了しました！"); this.navigateTo('home'); this.fetchItems(); } else { alert("エラー: " + error.message); }
                 }
             }
         }).mount('#app');

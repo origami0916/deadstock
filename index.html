@@ -416,6 +416,12 @@
                     if (error) alert("ログインエラー: " + error.message);
                 },
                 async signUp() {
+                    if (!this.authForm.email || !this.authForm.password) {
+                        return alert("メールアドレスとパスワードを入力してください");
+                    }
+                    if (this.authForm.password.length < 6) {
+                        return alert("パスワードは6文字以上で設定してください");
+                    }
                     const { error } = await client.auth.signUp(this.authForm);
                     if (!error) alert("確認メールを送信しました。メールボックスを確認してください。");
                     else alert("登録エラー: " + error.message);

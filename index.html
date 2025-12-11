@@ -68,8 +68,8 @@
     <!-- ========== Navigation ========== -->
     <nav class="bg-theme text-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3 cursor-pointer hover:opacity-90 transition"
-                @click="navigateTo('home')">
+            <div class="flex items-center space-x-3" :class="{'cursor-pointer hover:opacity-90 transition': user}"
+                @click="user && navigateTo('home')">
                 <i class="fas fa-prescription-bottle-alt text-2xl"></i>
                 <span class="text-xl font-bold tracking-wide">STARTLINEデッドストック</span>
             </div>
